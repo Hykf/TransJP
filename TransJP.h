@@ -27,9 +27,12 @@ namespace transjp {
         std::string to_hiragana(std::string str);
         std::string to_roma(std::string str,WritingMode mode);
         std::unordered_map<std::string, std::string> ReverseMap(std::unordered_map<std::string, std::string> mapToRevers);
+        bool is_consonant(char c);
+        bool is_vowel(char c);
+
 
         };
 
 } // transjp
 
-#endif //TRANSJP_TRANSJP_H
+#endif

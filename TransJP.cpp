@@ -1,5 +1,4 @@
 #include "TransJP.h"
-#include <regex>
 #include <string>
 #include <unordered_map>
 #include <algorithm>
@@ -40,7 +39,6 @@ namespace transjp {
                 {"ぴゃ", "pya"}, {"ぴゅ", "pyu"}, {"ぴょ", "pyo"}
         };
 
-        // Katakana to Romaji map
         KATAKANA_TO_ROMAJI_MAP = {
                 {"ア", "a"}, {"イ", "i"}, {"ウ", "u"}, {"エ", "e"}, {"オ", "o"},
                 {"カ", "ka"}, {"キ", "ki"}, {"ク", "ku"}, {"ケ", "ke"}, {"コ", "ko"},
@@ -70,6 +68,14 @@ namespace transjp {
                 {"ジャ", "ja"}, {"ジュ", "ju"}, {"ジョ", "jo"},
                 {"ビャ", "bya"}, {"ビュ", "byu"}, {"ビョ", "byo"},
                 {"ピャ", "pya"}, {"ピュ", "pyu"}, {"ピョ", "pyo"},
+
+                {"ヴァ", "va"}, {"ヴィ", "vi"}, {"ヴ", "vu"}, {"ヴェ", "ve"}, {"ヴォ", "vo"},
+                {"ファ", "fa"}, {"フィ", "fi"}, {"フェ", "fe"}, {"フォ", "fo"},
+                {"ウィ", "wi"}, {"ウェ", "we"}, {"ウォ", "wo"},
+                {"ティ", "ti"}, {"トゥ", "tu"}, {"チェ", "che"},
+                {"ディ", "di"}, {"デュ", "dyu"}, {"ドゥ", "du"},
+                {"ジェ", "je"}, {"シェ", "she"},
+
                 {"ー", "-"}, {"ッ", ""}
         };
 
@@ -78,56 +84,68 @@ namespace transjp {
 
     }
 
-
-
     std::string TransJP::to_katakana(std::string str) {
+        str = to_roma(str,HIRAGANA);
         std::string result;
         std::transform(str.begin(), str.end(), str.begin(), ::tolower);
 
         size_t i = 0;
         while (i < str.size()) {
 
+            if (i + 1 < str.size() && str[i] == str[i + 1] && is_consonant(str[i])) {
+                result += "ッ";
+                ++i;
+                continue;
+            }
+
+            if (i > 0 && is_vowel(str[i]) && str[i] == str[i - 1]) {
+                result += "ー";
+                ++i;
+                continue;
+            }
+
             std::string combined_str;
             bool found = false;
-
             for (int len = 3; len > 0; --len) {
 
                 if (i + len <= str.size()) {
 
                     combined_str = str.substr(i, len);
                     auto it = ROMAJI_TO_KATAKANA_MAP.find(combined_str);
-                    if (it != ROMAJI_TO_KATAKANA_MAP.end()) {
 
+                    if (it != ROMAJI_TO_KATAKANA_MAP.end()) {
                         result += it->second;
                         i += len;
                         found = true;
                         break;
-
                     }
-
                 }
-
             }
 
             if (!found) {
-                result += "ッ"; // TODO ogarnac kreske przy przedluzeniu
+                result += str[i];
                 ++i;
-
             }
-
         }
 
         return result;
-
     }
 
     std::string TransJP::to_hiragana(std::string str) {
+        str = to_roma(str,KATAKANA);
         std::string result;
         std::transform(str.begin(), str.end(), str.begin(), ::tolower);
 
         size_t i = 0;
 
         while (i < str.size()) {
+
+
+            if (i + 1 < str.size() && str[i] == str[i + 1] && is_consonant(str[i])) {
+                result += "っ";
+                ++i;
+                continue;
+            }
 
             std::string combined_str;
             bool found = false;
@@ -153,7 +171,7 @@ namespace transjp {
             }
 
             if (!found) {
-                result += "っ";
+                result += str[i];
                 ++i;
             }
 
@@ -179,7 +197,7 @@ namespace transjp {
                 auto it = sourceMap.find(converter.to_bytes(combined_str));
                 if (it != sourceMap.end()) {
                     wresult += converter.from_bytes(it->second);
-                    ++i; // Pomijamy następny znak
+                    ++i;
                     continue;
                 }
             }
@@ -189,14 +207,12 @@ namespace transjp {
             if (it != sourceMap.end()) {
                 wresult += converter.from_bytes(it->second);
             } else {
-                wresult += combined_str; // Dodaj oryginalny znak jeśli nie znaleziono w mapie
+                wresult += combined_str;
             }
         }
 
         return converter.to_bytes(wresult);
     }
-
-
 
     std::unordered_map<std::string, std::string> TransJP::ReverseMap(std::unordered_map<std::string, std::string> mapToRevers) {
         std::unordered_map<std::string, std::string> mapToReturn;
@@ -209,4 +225,14 @@ namespace transjp {
 
     }
 
-} // namespace transjp
+    bool TransJP::is_consonant(char c) {
+        std::string consonants = "bcdfghjklmnpqrstvwxyz";
+        return consonants.find(c) != std::string::npos;
+    }
+
+    bool TransJP::is_vowel(char c) {
+        std::string vowels = "aeiou";
+        return vowels.find(c) != std::string::npos;
+    }
+
+} //transjp
